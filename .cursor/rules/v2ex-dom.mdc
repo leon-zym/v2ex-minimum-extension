@@ -1,0 +1,26 @@
+---
+description: V2EX 页面 DOM 操作规范 — 适用于与 V2EX 网站交互的代码
+globs: src/features/**/*.ts
+alwaysApply: false
+---
+
+# V2EX DOM 操作规范
+
+## 数据获取
+
+- 优先从当前页面 DOM 解析数据
+- V2EX API 2.0 仅在 DOM 无法满足时使用
+- API 需要 Personal Access Token，权限敏感
+
+## DOM 选择器
+
+- 使用 `document.querySelector` / `querySelectorAll`
+- V2EX 页面结构可能随时变化，选择器应尽量使用语义化属性
+- 使用 `waitForElement` 工具函数等待动态加载的元素
+- 使用 `isV2exPage` 检查当前页面类型
+
+## 修改原则
+
+- 不删除原有 DOM 节点，只追加或修改属性
+- 添加的元素使用 `data-v2ex-min` 属性标记，便于识别和清理
+- 事件监听器必须在 cleanup 函数中移除

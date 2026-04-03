@@ -1,0 +1,41 @@
+{
+  "name": "v2ex-minimum-extension",
+  "description": "极简增强 V2EX 浏览体验的浏览器插件",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "wxt",
+    "dev:firefox": "wxt --browser firefox",
+    "dev:safari": "wxt --browser safari",
+    "build": "wxt build",
+    "build:firefox": "wxt build --browser firefox",
+    "build:safari": "wxt build --browser safari",
+    "zip": "wxt zip",
+    "zip:firefox": "wxt zip --browser firefox",
+    "zip:safari": "wxt zip --browser safari",
+    "postinstall": "wxt prepare",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "@cucumber/gherkin": "^39.0.0",
+    "@cucumber/messages": "^32.2.0",
+    "@tailwindcss/vite": "^4.2.2",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@wxt-dev/module-react": "^1.2.2",
+    "jsdom": "^29.0.1",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "tailwindcss": "^4.2.2",
+    "typescript": "^6.0.2",
+    "vitest": "^4.1.2",
+    "wxt": "^0.20.20"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
+  }
+}
