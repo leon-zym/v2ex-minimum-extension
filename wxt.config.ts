@@ -4,6 +4,9 @@ import tailwindcss from '@tailwindcss/vite';
 export default defineConfig({
   srcDir: 'src',
   modules: ['@wxt-dev/module-react'],
+  runner: {
+    disabled: true,
+  },
   vite: () => ({
     plugins: [tailwindcss()],
   }),
