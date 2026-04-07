@@ -38,14 +38,13 @@ export function FeatureList({ features }: FeatureListProps) {
             role="switch"
             aria-checked={isEnabled(feature.id)}
             onClick={() => toggle(feature.id)}
-            className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full transition-colors ${
+            className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full transition-colors ${
               isEnabled(feature.id) ? 'bg-blue-600' : 'bg-gray-300'
             }`}
           >
             <span
-              className={`pointer-events-none inline-block h-4 w-4 translate-y-0.5 rounded-full bg-white shadow-sm transition-transform ${
-                isEnabled(feature.id) ? 'translate-x-4' : 'translate-x-0.5'
-              }`}
+              className="pointer-events-none inline-block size-4 rounded-full bg-white shadow-sm transition-transform"
+              style={{ transform: `translateX(${isEnabled(feature.id) ? 18 : 2}px)` }}
             />
           </button>
         </li>
