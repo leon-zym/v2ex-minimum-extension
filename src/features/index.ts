@@ -1,11 +1,8 @@
 import type { FeatureDefinition } from '~/types/feature';
+import { replySortFeature } from '~/features/reply-sort';
 
-/**
- * Import all feature definitions here.
- * Each feature module should export a FeatureDefinition.
- */
 const featureModules: FeatureDefinition[] = [
-  // Add new features here as they are created
+  replySortFeature,
 ];
 
 export function registerAllFeatures(manager: {

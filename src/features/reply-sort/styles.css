@@ -1,0 +1,36 @@
+.v2ex-min-sort-group {
+  display: inline;
+}
+
+.v2ex-min-sort-btn.tb {
+  cursor: pointer;
+}
+
+.v2ex-min-sort-btn-active.tb,
+.v2ex-min-sort-btn-active.tb:hover {
+  background-color: rgba(0, 0, 0, 0.06);
+  font-weight: 500;
+}
+
+.v2ex-min-sort-btn-disabled.tb {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.v2ex-min-sort-spinner {
+  display: none;
+  width: 12px;
+  height: 12px;
+  margin-left: 4px;
+  border: 2px solid #ccc;
+  border-top-color: #333;
+  border-radius: 50%;
+  animation: v2ex-min-spin 0.6s linear infinite;
+  vertical-align: middle;
+}
+
+@keyframes v2ex-min-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

@@ -10,6 +10,10 @@ export interface FeatureMeta {
 }
 
 export const featureRegistry: FeatureMeta[] = [
-  // New features are added here as static metadata.
-  // The actual setup logic lives in each feature's own module under src/features/.
+  {
+    id: 'reply-sort',
+    name: '评论按感谢排序',
+    description: '支持将帖子评论按感谢数量从多到少排序',
+    defaultEnabled: true,
+  },
 ];
