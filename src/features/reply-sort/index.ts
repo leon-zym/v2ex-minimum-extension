@@ -9,21 +9,23 @@ import {
   TooManyPagesError,
   FetchAbortedError,
 } from './sort-logic';
-import { loadSortPreference, saveSortPreference, type SortMode } from './sort-storage';
+import { createSortStorage, type SortMode } from './sort-storage';
 import { createSortButtons, type SortButtonGroup } from './sort-button';
+import './styles.css';
 
 export const replySortFeature: FeatureDefinition = {
   id: 'reply-sort',
-  name: '评论按感谢数排序',
+  name: '评论按感谢排序',
   description: '支持将帖子评论按感谢数量从多到少排序',
   defaultEnabled: true,
 
-  setup() {
+  setup(ctx) {
     if (!isV2exPage('/t/')) return;
 
     const replyBox = getReplyBox();
     if (!replyBox) return;
 
+    const storage = createSortStorage(ctx);
     let currentMode: SortMode = 'default';
     let originalOrder: string[] = [];
     let isMultiPageSorted = false;
@@ -35,7 +37,7 @@ export const replySortFeature: FeatureDefinition = {
     const buttons = createSortButtons(handleSwitch, 'default');
     if (!buttons) return;
 
-    loadSortPreference().then((saved) => {
+    storage.load().then((saved) => {
       if (saved === 'thanks' && currentMode !== 'thanks') {
         handleSwitch('thanks');
       }
@@ -51,7 +53,7 @@ export const replySortFeature: FeatureDefinition = {
 
       currentMode = 'thanks';
       buttons!.setActive('thanks');
-      saveSortPreference('thanks');
+      storage.save('thanks');
 
       const totalPages = getTotalPages();
 
@@ -129,7 +131,7 @@ export const replySortFeature: FeatureDefinition = {
     async function restoreDefault(btns: SortButtonGroup): Promise<void> {
       currentMode = 'default';
       btns.setActive('default');
-      saveSortPreference('default');
+      storage.save('default');
 
       if (isMultiPageSorted) {
         window.location.search = '';
@@ -159,7 +161,7 @@ export const replySortFeature: FeatureDefinition = {
       buttons?.destroy();
 
       if (currentMode === 'thanks') {
-        saveSortPreference('default');
+        storage.save('default');
 
         if (isMultiPageSorted) {
           window.location.reload();

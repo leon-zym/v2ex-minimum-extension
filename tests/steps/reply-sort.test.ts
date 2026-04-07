@@ -1,4 +1,6 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { expect } from 'vitest';
+import path from 'node:path';
+import { runFeature, type StepDefinition, type DataTable } from '../support/gherkin-runner';
 import {
   parseReplyThanks,
   sortRepliesByThanks,
@@ -42,67 +44,83 @@ function createReplyCell(floor: number, thanks: number): Element {
 }
 
 function getFloorOrder(cells: Element[]): string {
-  return cells
-    .map((c) => {
-      const id = c.id;
-      return id.replace('r_', '');
-    })
-    .join(',');
+  return cells.map((c) => c.id.replace('r_', '')).join(',');
 }
 
-describe('评论按感谢数排序', () => {
-  beforeEach(() => {
-    document.body.innerHTML = '';
+let singleCell: Element | null = null;
+let cells: Element[] = [];
+let sorted: Element[] = [];
+
+function buildCellsFromTable(dataTable: DataTable): void {
+  const dataRows = dataTable.slice(1);
+  cells = dataRows.map((row) => {
+    const floor = parseInt(row[0], 10);
+    const thanks = parseInt(row[1], 10);
+    return createReplyCell(floor, thanks);
   });
+}
 
-  it('解析有感谢数的评论', () => {
-    const cell = createReplyCell(1, 6);
-    expect(parseReplyThanks(cell)).toBe(6);
-  });
+const stepDefs: StepDefinition[] = [
+  {
+    pattern: /有一条评论包含感谢数 "(\d+)"/,
+    fn: ([thanksStr]) => {
+      singleCell = createReplyCell(1, parseInt(thanksStr, 10));
+    },
+  },
+  {
+    pattern: /有一条评论没有感谢数/,
+    fn: () => {
+      singleCell = createReplyCell(1, 0);
+    },
+  },
+  {
+    pattern: /解析该评论的感谢数时/,
+    fn: () => {},
+  },
+  {
+    pattern: /应该返回 (\d+)/,
+    fn: ([expected]) => {
+      expect(parseReplyThanks(singleCell!)).toBe(parseInt(expected, 10));
+    },
+  },
+  {
+    pattern: /有以下评论及感谢数/,
+    fn: (_args, dataTable) => {
+      if (dataTable) {
+        buildCellsFromTable(dataTable);
+      }
+    },
+  },
+  {
+    pattern: /按感谢数排序时/,
+    fn: () => {
+      sorted = sortRepliesByThanks(cells);
+    },
+  },
+  {
+    pattern: /恢复默认排序/,
+    fn: () => {
+      const originalOrder = cells.map((c) => c.id);
+      sorted = originalOrder.map((id) => cells.find((c) => c.id === id)!);
+    },
+  },
+  {
+    pattern: /评论顺序应该为 "([^"]+)"/,
+    fn: ([expected]) => {
+      expect(getFloorOrder(sorted)).toBe(expected);
+    },
+  },
+];
 
-  it('解析无感谢数的评论', () => {
-    const cell = createReplyCell(1, 0);
-    expect(parseReplyThanks(cell)).toBe(0);
-  });
-
-  it('单页评论按感谢数降序排序', () => {
-    const cells = [
-      createReplyCell(1, 0),
-      createReplyCell(2, 6),
-      createReplyCell(3, 2),
-      createReplyCell(4, 0),
-      createReplyCell(5, 8),
-    ];
-
-    const sorted = sortRepliesByThanks(cells);
-    expect(getFloorOrder(sorted)).toBe('5,2,3,1,4');
-  });
-
-  it('感谢数相同时保持原始顺序', () => {
-    const cells = [
-      createReplyCell(1, 3),
-      createReplyCell(2, 3),
-      createReplyCell(3, 5),
-    ];
-
-    const sorted = sortRepliesByThanks(cells);
-    expect(getFloorOrder(sorted)).toBe('3,1,2');
-  });
-
-  it('恢复默认排序', () => {
-    const cells = [
-      createReplyCell(1, 0),
-      createReplyCell(2, 6),
-      createReplyCell(3, 2),
-    ];
-    const originalOrder = cells.map((c) => c.id);
-
-    const sorted = sortRepliesByThanks(cells);
-    expect(getFloorOrder(sorted)).toBe('2,3,1');
-
-    const restored = originalOrder
-      .map((id) => cells.find((c) => c.id === id)!)
-      .filter(Boolean);
-    expect(getFloorOrder(restored)).toBe('1,2,3');
-  });
-});
+runFeature(
+  path.resolve(__dirname, '../features/reply-sort.feature'),
+  stepDefs,
+  {
+    beforeEach: () => {
+      document.body.innerHTML = '';
+      singleCell = null;
+      cells = [];
+      sorted = [];
+    },
+  },
+);

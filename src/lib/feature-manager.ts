@@ -2,6 +2,7 @@ import type {
   FeatureDefinition,
   FeatureContext,
   FeatureState,
+  CleanupFn,
 } from '~/types/feature';
 import {
   loadFeatureState,
@@ -11,7 +12,7 @@ import {
 
 class FeatureManager {
   private registry = new Map<string, FeatureDefinition>();
-  private cleanups = new Map<string, () => void>();
+  private cleanups = new Map<string, CleanupFn>();
   private unsubscribe: (() => void) | null = null;
 
   register(feature: FeatureDefinition): void {
@@ -41,11 +42,10 @@ class FeatureManager {
     await setFeatureEnabled(featureId, enabled);
   }
 
-  destroy(): void {
+  async destroy(): Promise<void> {
     this.unsubscribe?.();
-    for (const cleanup of this.cleanups.values()) {
-      cleanup();
-    }
+    const pending = Array.from(this.cleanups.values()).map((fn) => fn());
+    await Promise.allSettled(pending);
     this.cleanups.clear();
   }
 
@@ -66,10 +66,17 @@ class FeatureManager {
     }
   }
 
-  private deactivate(featureId: string): void {
+  private async deactivate(featureId: string): Promise<void> {
     const cleanup = this.cleanups.get(featureId);
     if (cleanup) {
-      cleanup();
+      try {
+        await cleanup();
+      } catch (err) {
+        console.error(
+          `[V2EX-Min] Error during cleanup of feature "${featureId}":`,
+          err,
+        );
+      }
       this.cleanups.delete(featureId);
     }
   }
@@ -89,10 +96,15 @@ class FeatureManager {
 
   private createContext(): FeatureContext {
     return {
-      query: <T extends Element = Element>(selector: string) =>
-        document.querySelector<T>(selector),
-      queryAll: <T extends Element = Element>(selector: string) =>
-        Array.from(document.querySelectorAll<T>(selector)),
+      storage: {
+        async get<T = unknown>(key: string): Promise<T | undefined> {
+          const result = await browser.storage.local.get(key);
+          return result[key] as T | undefined;
+        },
+        async set(key: string, value: unknown): Promise<void> {
+          await browser.storage.local.set({ [key]: value });
+        },
+      },
     };
   }
 }
