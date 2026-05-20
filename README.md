@@ -4,6 +4,12 @@
 
 以最小化、无侵入的方式优化网站的交互和样式，不破坏原有布局和功能。
 
+## 功能
+
+- [x] **评论按感谢排序** — 在帖子页面将评论按感谢数量从多到少排序，支持多页合并排序
+
+更多功能持续开发中。
+
 ## 技术栈
 
 - **框架**：[WXT](https://wxt.dev)（基于 Vite）
@@ -39,7 +45,7 @@ pnpm dev:firefox
 pnpm dev:safari
 ```
 
-启动后，在 Chrome 中打开 `chrome://extensions`，启用「开发者模式」，点击「加载已解压的扩展程序」，选择 `.output/chrome-mv3` 目录。
+启动后，在 Chrome 中打开 `chrome://extensions`，启用「开发者模式」，点击「加载已解压的扩展程序」，选择 `.output/chrome-mv3-dev` 目录。
 
 ### 构建
 
@@ -82,13 +88,7 @@ tests/
 └── support/           # 测试辅助
 ```
 
-## 添加新功能
-
-1. 在 `tests/features/` 下编写 `.feature` 文件描述用户行为
-2. 在 `src/features/<name>/` 下实现功能模块
-3. 在 `src/features/registry.ts` 注册功能元数据
-4. 在 `src/features/index.ts` 注册运行时定义
-5. 在 `tests/steps/` 下编写测试
+开发规范和功能开发流程详见 [AGENTS.md](AGENTS.md)。
 
 ## 许可证
 

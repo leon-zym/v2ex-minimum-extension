@@ -1,74 +1,90 @@
-# V2EX Minimum Extension — AI Agent 全局规则
+# V2EX Minimum Extension — AI Agent 规则
 
-## 项目定位
+## 项目概述
 
-针对 [V2EX](https://www.v2ex.com)（UGC 社区论坛）的浏览器插件。以"最小化"、"极简"的形态增强网站原有功能。
+针对 [V2EX](https://www.v2ex.com) 的浏览器插件。以极简方式增强浏览体验，不破坏网站原有的布局、样式和交互。
 
 ## 技术栈
 
-| 类别       | 选型                                          |
-| ---------- | --------------------------------------------- |
-| 框架       | WXT（基于 Vite）                              |
-| 语言       | TypeScript                                    |
-| UI         | React（复杂 UI）+ 原生 DOM（简单操作）        |
-| 样式       | Tailwind CSS（插件 UI）；命名空间 CSS（页面） |
-| 包管理     | pnpm                                          |
-| Manifest   | V3                                            |
-| 存储       | chrome.storage.local                          |
-| 测试       | Vitest + Gherkin BDD                          |
-| 目标浏览器 | Chrome + Safari macOS                         |
+- **框架**: WXT（基于 Vite），Manifest V3
+- **语言**: TypeScript 严格模式
+- **UI**: React（复杂 UI）+ 原生 DOM（简单操作）
+- **样式**: Tailwind CSS + Shadow DOM（插件 UI）；命名空间 CSS（页面修改）
+- **存储**: chrome.storage.local
+- **测试**: Vitest + Gherkin BDD
+- **目标浏览器**: Chrome + Safari macOS
 
-## 核心原则
+## 开发流程
 
-- 每个功能都是小范围增强，做"锦上添花"而非"伤筋动骨"的改动
-- 不删除、不覆盖网站原有的 DOM 节点、CSS 类、网络请求行为
-- 添加的 DOM 元素使用 `data-v2ex-min` 属性标记；注入的 CSS 以 `v2ex-min-` 为命名空间前缀
-- 不使用 `!important`，除非覆盖目标有明确的 `!important`
-- 优先解析页面 DOM 获取数据，[V2EX API 2.0](https://www.v2ex.com/help/api) 仅在 DOM 无法满足时按需使用
-- 功能实现时需考虑桌面端和移动端两种 DOM 结构（当前阶段仅在桌面端验证）
+功能开发必须遵循 BDD 范式——先写行为描述和测试，再写实现代码。
 
-### UI 注入策略
+每个新功能按以下顺序完成：
 
-- **插件自有 UI**（悬浮面板、弹窗等独立组件）：Shadow DOM + `createShadowRootUi` + Tailwind CSS
-- **页面增强元素**（融入原有界面的按钮、标签等）：直接 DOM 操作 + 复用网站 CSS class + `v2ex-min-` 命名空间 CSS 补充。不使用 Shadow DOM 或 React
+1. `tests/features/<name>.feature` — 用中文 Gherkin 描述用户行为
+2. `tests/steps/<name>.test.ts` — 编写步骤定义和测试
+3. `src/features/<name>/index.ts` — 实现功能，导出 `FeatureDefinition`
+4. `src/features/registry.ts` — 在 `featureRegistry` 数组中添加元数据
+5. `src/features/index.ts` — 在 `featureModules` 数组中注册运行时定义
+6. 使用 chrome-devtools MCP 在真实浏览器中验证效果
 
-## 开发流程（BDD 驱动）
+## 开发规则
 
-1. **描述行为**：在 `tests/features/` 用中文 Gherkin（`# language: zh-CN`）编写 `.feature` 文件
-2. **定义步骤**：在 `tests/steps/` 用 `runFeature()` 绑定 `.feature` 到步骤定义（支持 DataTable）
-3. **实现功能**：在 `src/features/<name>/index.ts` 实现，导出 `FeatureDefinition`
-4. **注册功能**：在 `src/features/registry.ts` 注册元数据，在 `src/features/index.ts` 注册运行时定义
-5. **浏览器验证**：用 chrome-devtools MCP 在真实浏览器中验证效果
+### WXT 框架
 
-`.feature` 文件是可执行的测试规格，未匹配的步骤会直接报错。
+- 入口点放在 `src/entrypoints/`，WXT 按文件名自动识别类型，不手动修改 manifest
+- Content Script 使用 `defineContentScript`，Background 使用 `defineBackground`
+- `pnpm dev` 启动后加载 `.output/chrome-mv3-dev` 目录即可 HMR 热更新
 
-## 架构要点
+### DOM
 
-- 每个功能通过 Feature Toggle 系统管理，用户可在 Popup 中逐个启用/禁用
-- 功能状态持久化到 `chrome.storage.local`，跨会话保持
-- 新增功能必须实现 `FeatureDefinition` 接口（`id`、`setup`），`setup()` 接收 `FeatureContext`，必须返回 cleanup 函数
+- 不删除原有 DOM 节点，只追加或修改属性
+- 添加的元素使用 `data-v2ex-min` 属性标记，便于识别和清理
+- 优先解析当前页面 DOM 获取数据，[V2EX API](https://www.v2ex.com/help/api) 仅在 DOM 无法满足时使用
+- 选择器尽量使用语义化属性（V2EX 页面结构可能变化）
+- 使用 `waitForElement` 等待动态加载的元素，使用 `isV2exPage` 检查页面类型
+- 事件监听器必须在 cleanup 函数中移除
 
-### Feature 目录结构
+### 样式
+
+- 不删除网站原有的 CSS 类或样式
+- 所有注入的 CSS 选择器以 `v2ex-min-` 或 `[data-v2ex-min]` 为命名空间
+- 注入到宿主页面的插件 UI 必须使用 Shadow DOM 隔离（`createShadowRootUi` + Tailwind CSS）
+- 避免 `!important`，除非覆盖目标有明确的 `!important`
+
+### 架构
+
+- `setup` 函数必须返回 `cleanup` 函数，用于功能禁用时清理副作用
+- 每个 feature 独立目录，高内聚低耦合
+- 导入路径使用 `~` 别名指向 `src/` 目录
+
+### 测试
+
+- `.feature` 文件使用中文 Gherkin 语法（`# language: zh-CN`），放在 `tests/features/`
+- 步骤定义放在 `tests/steps/`，使用 Vitest 的 `describe/it` 包装场景，正则匹配步骤文本
+- 单元/集成测试用 `pnpm test` 运行，E2E 验证用 chrome-devtools MCP 在真实浏览器中触发
+
+## 文件组织
 
 ```
-src/features/<name>/
-├── index.ts          # FeatureDefinition 入口，导出 setup/cleanup
-├── *-logic.ts        # 纯逻辑（解析、排序、计算），不依赖 DOM 副作用，便于单测
-├── *-button.ts       # DOM 操作（创建、插入、销毁元素）
-├── *-storage.ts      # 功能私有的持久化逻辑，使用 FeatureContext.storage
-└── styles.css        # 命名空间 CSS，在 feature 模块中 import（不在 content.ts 集中导入）
+src/
+├── entrypoints/       # WXT 入口点（content script, popup, background）
+├── features/          # 功能模块（每个功能一个目录）
+│   ├── registry.ts    # 功能元数据注册表（Popup 共享）
+│   └── index.ts       # 功能运行时注册
+├── components/        # 共享 React 组件
+├── hooks/             # React Hooks
+├── lib/               # 工具库（storage, feature-manager, dom-utils）
+├── styles/            # 页面样式覆盖
+├── assets/            # 静态资源（Tailwind CSS 入口等）
+└── types/             # TypeScript 类型定义
+tests/
+├── features/          # Gherkin .feature 文件
+├── steps/             # 步骤定义和测试文件
+└── support/           # 测试辅助工具
 ```
 
-## 代码约定
+## 移动端兼容性
 
-- 导入路径使用 `~` 别名（指向 `src/`）
-- 入口点放在 `src/entrypoints/`，WXT 按文件名自动识别，不要手动修改 manifest
-- V2EX 页面结构可能随时变化，选择器应尽量使用语义化属性
-- Feature id 使用 kebab-case（如 `reply-sort`）；storage key 以 `v2ex-min-` 为前缀
-- 错误日志使用 `[V2EX-Min]` 前缀，`setup` 内部的非致命错误应 catch 并 warn，不要中断其他功能
-
-## 禁止项
-
-- 不要拦截、修改、重放网站原有的网络请求
-- 不要在 Content Script 中使用 `eval` 或动态注入 `<script>` 标签
-- 不要跳过 BDD 流程直接实现功能——先有 `.feature` 文件描述行为，再写代码
+- 架构层面预留 iOS Safari 兼容性
+- V2EX 网站根据浏览器 UA 返回不同布局，功能实现时需考虑桌面端和移动端两种 DOM 结构
+- 当前阶段仅在桌面端（Chrome + Safari macOS）验证
