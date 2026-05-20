@@ -56,7 +56,10 @@ pnpm build
 # 构建 Safari 版本
 pnpm build:safari
 
-# 打包 ZIP（用于发布）
+# 打包 Safari 宿主 APP
+pnpm package:safari
+
+# 打包 ZIP
 pnpm zip
 ```
 
@@ -89,6 +92,14 @@ tests/
 ```
 
 开发规范和功能开发流程详见 [AGENTS.md](AGENTS.md)。
+
+## 注意事项
+
+### Safari 扩展
+
+- 前置条件：macOS + Xcode Command Line Tools（`xcode-select --install`）
+- 构建出的未签名 App 需要在 Safari 中开启 "Develop > Allow Unsigned Extensions" 才能使用（每次重启 Safari 需重新开启）
+- 双击运行 `.app` 后，扩展即出现在 Safari 的扩展列表中，可持久加载
 
 ## 许可证
 

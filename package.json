@@ -14,6 +14,7 @@
     "zip": "wxt zip",
     "zip:firefox": "wxt zip --browser firefox",
     "zip:safari": "wxt zip --browser safari",
+    "package:safari": "sh scripts/package-safari.sh",
     "postinstall": "wxt prepare",
     "test": "vitest run",
     "test:watch": "vitest"
