@@ -13,9 +13,10 @@ export interface SortButtonGroup {
 export function createSortButtons(
   onSwitch: (mode: SortMode) => void,
   initialMode: SortMode,
+  replyBox?: Element | null,
 ): SortButtonGroup | null {
-  const topicButtons = document.querySelector('.topic_buttons');
-  if (!topicButtons) return null;
+  const mount = resolveSortButtonMount(replyBox);
+  if (!mount) return null;
 
   const container = document.createElement('span');
   container.setAttribute(ATTR, CONTAINER_ATTR_VALUE);
@@ -41,12 +42,7 @@ export function createSortButtons(
     onSwitch('thanks');
   });
 
-  const thankDiv = topicButtons.querySelector('#topic_thank');
-  if (thankDiv) {
-    thankDiv.after(container);
-  } else {
-    topicButtons.appendChild(container);
-  }
+  mount.insert(container);
 
   return {
     container,
@@ -63,6 +59,63 @@ export function createSortButtons(
       container.remove();
     },
   };
+}
+
+interface SortButtonMount {
+  insert(container: HTMLElement): void;
+}
+
+function resolveSortButtonMount(replyBox?: Element | null): SortButtonMount | null {
+  const topicButtons = document.querySelector('.topic_buttons');
+  if (topicButtons) {
+    return {
+      insert(container) {
+        const thankDiv = topicButtons.querySelector('#topic_thank');
+        if (thankDiv) {
+          thankDiv.after(container);
+        } else {
+          topicButtons.appendChild(container);
+        }
+      },
+    };
+  }
+
+  const replyHeader = findReplyHeader(replyBox);
+  if (replyHeader) {
+    return {
+      insert(container) {
+        const summary = replyHeader.querySelector('.gray');
+        if (summary) {
+          summary.after(container);
+        } else {
+          replyHeader.appendChild(container);
+        }
+      },
+    };
+  }
+
+  return null;
+}
+
+function findReplyHeader(replyBox?: Element | null): Element | null {
+  const box = replyBox ?? document.querySelector('.cell[id^="r_"]')?.parentElement;
+  if (!box) return null;
+
+  const firstReply = box.querySelector('.cell[id^="r_"]');
+  let current = firstReply?.previousElementSibling ?? null;
+
+  while (current) {
+    if (
+      current.classList.contains('cell') &&
+      !current.id &&
+      !current.classList.contains('ps_container')
+    ) {
+      return current;
+    }
+    current = current.previousElementSibling;
+  }
+
+  return null;
 }
 
 function createButton(text: string, mode: SortMode, active: boolean): HTMLAnchorElement {

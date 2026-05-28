@@ -34,7 +34,7 @@ export const replySortFeature: FeatureDefinition = {
 
     originalOrder = getCurrentPageReplies().map((el) => el.id);
 
-    const buttons = createSortButtons(handleSwitch, 'default');
+    const buttons = createSortButtons(handleSwitch, 'default', replyBox);
     if (!buttons) return;
 
     storage.load().then((saved) => {
